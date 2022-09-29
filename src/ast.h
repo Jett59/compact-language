@@ -17,7 +17,7 @@ struct Location {
   }
 };
 
-enum class AstNodeType { VARIABLE_REFERENCE, BINARY_EXPRESSION };
+enum class AstNodeType { VARIABLE_REFERENCE, NUMBER, BINARY_EXPRESSION };
 
 class AstNode {
   Location location;
@@ -42,6 +42,16 @@ public:
   const std::string &getName() const { return name; }
 };
 
+class NumberNode : public AstNode {
+  double value;
+
+public:
+  NumberNode(Location location, double value)
+      : AstNode(location, AstNodeType::NUMBER), value(value) {}
+
+  double getValue() const { return value; }
+};
+
 enum class BinaryOperator { ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULO };
 
 class BinaryExpressionNode : public AstNode {
@@ -50,10 +60,11 @@ class BinaryExpressionNode : public AstNode {
   BinaryOperator op;
 
 public:
-  BinaryExpressionNode(Location location, BinaryOperator op, std::unique_ptr<AstNode> left,
+  BinaryExpressionNode(Location location, BinaryOperator op,
+                       std::unique_ptr<AstNode> left,
                        std::unique_ptr<AstNode> right)
       : AstNode(location, AstNodeType::BINARY_EXPRESSION), op(op),
-        left(std::move(left)), right(std::move(right)){}
+        left(std::move(left)), right(std::move(right)) {}
 
   const AstNode &getLeft() const { return *left; }
   const AstNode &getRight() const { return *right; }

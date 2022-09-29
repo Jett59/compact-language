@@ -78,6 +78,9 @@ expression:
 IDENTIFIER {
     $$ = make_unique<VariableReferenceNode>(@1, $1);
 }
+| NUMBER {
+    $$ = make_unique<NumberNode>(@1, $1);
+}
 | "(" expression ")" {
     $$ = $2;
 }
