@@ -26,7 +26,7 @@
 "\n"|" "|"\t"|"\r"|"\v"|"\f" ;
 
 [a-zA-Z$_][a-zA-Z0-9$_]* { return MAKE_PARAMS(IDENTIFIER, yytext); }
-[0-9]+(.[0-9]*)? { return MAKE_PARAMS(NUMBER, strtod(yytext, nullptr)); }
+[0-9]+(\.[0-9]*)? { return MAKE_PARAMS(NUMBER, strtod(yytext, nullptr)); }
 
 "(" { return MAKE(LEFT_PAREN); }
 ")" { return MAKE(RIGHT_PAREN); }

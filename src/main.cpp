@@ -5,6 +5,23 @@
 
 using namespace compact;
 
+static void printValue(const Value &value) {
+  if (value.is<ValueType::NUMBER>()) {
+    std::cout << value.get<ValueType::NUMBER>() << std::endl;
+  } else if (value.is<ValueType::STRING>()) {
+    std::cout << value.get<ValueType::STRING>() << std::endl;
+  } else if (value.is<ValueType::BOOLEAN>()) {
+    std::cout << (value.get<ValueType::BOOLEAN>() ? "true" : "false")
+              << std::endl;
+  } else if (value.is<ValueType::LIST>()) {
+    std::cout << "[";
+    for (auto &item : value.get<ValueType::LIST>()) {
+      printValue(item);
+    }
+    std::cout << "]" << std::endl;
+  }
+}
+
 static void usage(char *command) {
   std::cout << "Usage: " << command << " <filename>" << std::endl;
 }
@@ -21,8 +38,16 @@ int main(int argc, char **argv) {
   Parser parser(lexer, fileName, &ast);
   int result = parser();
   if (result == 0) {
-    std::cout << "Parsed successfully" << std::endl;
+    try {
+      Context context;
+      Value programOutput = ast->evaluate(context);
+      printValue(programOutput);
+    } catch (const CompactError &e) {
+      error(e);
+      return -1;
+    }
   } else {
     std::cout << "Parse failed" << std::endl;
+    return -1;
   }
 }

@@ -5,9 +5,9 @@
 #include "interpreter/context.h"
 #include "interpreter/value.h"
 #include "location.h"
+#include <cmath>
 #include <memory>
 #include <string>
-#include <cmath>
 
 namespace compact {
 enum class AstNodeType { VARIABLE_REFERENCE, NUMBER, BINARY_EXPRESSION };
@@ -36,7 +36,14 @@ public:
 
   const std::string &getName() const { return name; }
 
-  Value evaluate(Context &context) override { return context.variables[name]; }
+  Value evaluate(Context &context) override {
+    using std::literals::string_literals::operator""s;
+    if (context.variables.contains(name)) {
+      return context.variables[name];
+    } else {
+      throw CompactError(getLocation(), "Variable "s + name + " is not defined"s);
+    }
+  }
 };
 
 class NumberNode : public AstNode {
@@ -69,8 +76,10 @@ public:
   const AstNode &getRight() const { return *right; }
   BinaryOperator getOperator() const { return op; }
 
-  Value evaluate(const Value &leftValue, const Value &rightValue, Context &context) {
-    if (leftValue.is<ValueType::NUMBER>() && rightValue.is<ValueType::NUMBER>()) {
+  Value evaluate(const Value &leftValue, const Value &rightValue,
+                 Context &context) {
+    if (leftValue.is<ValueType::NUMBER>() &&
+        rightValue.is<ValueType::NUMBER>()) {
       double leftNumber = leftValue.get<ValueType::NUMBER>();
       double rightNumber = rightValue.get<ValueType::NUMBER>();
       switch (op) {
@@ -84,7 +93,7 @@ public:
         return Value(leftNumber / rightNumber);
       case BinaryOperator::MODULO:
         return Value(std::fmod(leftNumber, rightNumber));
-        default:
+      default:
         throw CompactError(getLocation(), "Unknown binary operator");
       }
     } else if (leftValue.is<ValueType::LIST>()) {
