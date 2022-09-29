@@ -1,8 +1,8 @@
 #ifndef COMPACT_ERROR_H
 #define COMPACT_ERROR_H
 
-#include "ast.h"
-#include <exception>
+#include "location.h"
+#include   <exception>
 #include <string>
 
 namespace compact {
