@@ -37,6 +37,10 @@
 "/" { return MAKE(SLASH); }
 "%" { return MAKE(PERCENT); }
 
+"~" { return MAKE(TILDE); }
+"^" { return MAKE(CARET); }
+"!" { return MAKE(BANG); }
+
 <<EOF>> return yyterminate();
 
 . {

@@ -41,7 +41,8 @@ public:
     if (context.variables.contains(name)) {
       return context.variables[name];
     } else {
-      throw CompactError(getLocation(), "Variable "s + name + " is not defined"s);
+      throw CompactError(getLocation(),
+                         "Variable "s + name + " is not defined"s);
     }
   }
 };
@@ -58,7 +59,16 @@ public:
   Value evaluate(Context &context) override { return Value(value); }
 };
 
-enum class BinaryOperator { ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULO };
+enum class BinaryOperator {
+  ADD,
+  SUBTRACT,
+  MULTIPLY,
+  DIVIDE,
+  MODULO,
+  RANGE,
+  POWER,
+  NOT_EQUAL
+};
 
 class BinaryExpressionNode : public AstNode {
   std::unique_ptr<AstNode> left;
@@ -93,6 +103,25 @@ public:
         return Value(leftNumber / rightNumber);
       case BinaryOperator::MODULO:
         return Value(std::fmod(leftNumber, rightNumber));
+        case BinaryOperator::RANGE: {
+          std::vector<Value> values;
+          if (static_cast<int>(leftNumber) == leftNumber &&
+              static_cast<int>(rightNumber) == rightNumber) {
+            for (int i = static_cast<int>(leftNumber);
+                 i <= static_cast<int>(rightNumber); i++) {
+              values.push_back(Value(static_cast<double>(i)));
+            }
+          } else {
+            throw CompactError(getLocation(), "Range must be between two integers");
+          }
+          return Value(values);
+        }
+        case BinaryOperator::POWER: {
+          return Value(std::pow(leftNumber, rightNumber));
+        }
+        case BinaryOperator::NOT_EQUAL: {
+          return Value(leftNumber != rightNumber);
+        }
       default:
         throw CompactError(getLocation(), "Unknown binary operator");
       }

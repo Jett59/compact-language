@@ -7,18 +7,18 @@ using namespace compact;
 
 static void printValue(const Value &value) {
   if (value.is<ValueType::NUMBER>()) {
-    std::cout << value.get<ValueType::NUMBER>() << std::endl;
+    std::cout << value.get<ValueType::NUMBER>();
   } else if (value.is<ValueType::STRING>()) {
-    std::cout << value.get<ValueType::STRING>() << std::endl;
+    std::cout << value.get<ValueType::STRING>();
   } else if (value.is<ValueType::BOOLEAN>()) {
-    std::cout << (value.get<ValueType::BOOLEAN>() ? "true" : "false")
-              << std::endl;
+    std::cout << (value.get<ValueType::BOOLEAN>() ? "true" : "false");
   } else if (value.is<ValueType::LIST>()) {
     std::cout << "[";
     for (auto &item : value.get<ValueType::LIST>()) {
       printValue(item);
+      std::cout << ", ";
     }
-    std::cout << "]" << std::endl;
+    std::cout << "]";
   }
 }
 
@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
       Context context;
       Value programOutput = ast->evaluate(context);
       printValue(programOutput);
+      std::cout << std::endl;
     } catch (const CompactError &e) {
       error(e);
       return -1;
