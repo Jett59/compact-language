@@ -21,6 +21,7 @@ flex_target(lexer src/lexer.l "${CMAKE_CURRENT_BINARY_DIR}/lexer.cc")
 add_executable(compact
 src/error.cpp
     src/main.cpp
+    src/interpreter/value.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/lexer.cc"
     "${CMAKE_CURRENT_BINARY_DIR}/parser.cc"
 )

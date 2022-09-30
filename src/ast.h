@@ -138,6 +138,7 @@ public:
     } else if (leftValue.is<ValueType::LIST>()) {
       auto leftValues = leftValue.get<ValueType::LIST>();
       std::vector<Value> resultValues;
+      resultValues.reserve(leftValues.size());
       for (auto &leftValue : leftValues) {
         resultValues.push_back(evaluate(leftValue, rightValue, context));
       }
@@ -145,6 +146,7 @@ public:
     } else if (rightValue.is<ValueType::LIST>()) {
       auto rightValues = rightValue.get<ValueType::LIST>();
       std::vector<Value> resultValues;
+      resultValues.reserve(rightValues.size());
       for (auto &rightValue : rightValues) {
         resultValues.push_back(evaluate(leftValue, rightValue, context));
       }
