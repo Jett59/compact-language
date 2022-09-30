@@ -7,7 +7,7 @@
 
 namespace compact {
 struct Context {
-  std::map<std::string, Value> variables;
+  std::map<std::string, std::shared_ptr<Value>> variables;
 };
 } // namespace compact
 

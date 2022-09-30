@@ -5,12 +5,19 @@
 #include "interpreter/context.h"
 #include "interpreter/value.h"
 #include "location.h"
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
 
 namespace compact {
-enum class AstNodeType { VARIABLE_REFERENCE, NUMBER, BINARY_EXPRESSION };
+enum class AstNodeType {
+  VARIABLE_REFERENCE,
+  NUMBER,
+  BINARY_EXPRESSION,
+  FUNCTION_EXPRESSION,
+  FILTER_EXPRESSION
+};
 
 class AstNode {
   Location location;
@@ -39,7 +46,7 @@ public:
   Value evaluate(Context &context) override {
     using std::literals::string_literals::operator""s;
     if (context.variables.contains(name)) {
-      return context.variables[name];
+      return *context.variables[name];
     } else {
       throw CompactError(getLocation(),
                          "Variable "s + name + " is not defined"s);
@@ -103,25 +110,28 @@ public:
         return Value(leftNumber / rightNumber);
       case BinaryOperator::MODULO:
         return Value(std::fmod(leftNumber, rightNumber));
-        case BinaryOperator::RANGE: {
+      case BinaryOperator::RANGE: {
+        if (static_cast<uintmax_t>(leftNumber) == leftNumber &&
+            static_cast<uintmax_t>(rightNumber) == rightNumber) {
+              uintmax_t leftInt = static_cast<uintmax_t>(leftNumber);
+              uintmax_t rightInt = static_cast<uintmax_t>(rightNumber);
           std::vector<Value> values;
-          if (static_cast<int>(leftNumber) == leftNumber &&
-              static_cast<int>(rightNumber) == rightNumber) {
-            for (int i = static_cast<int>(leftNumber);
-                 i <= static_cast<int>(rightNumber); i++) {
-              values.push_back(Value(static_cast<double>(i)));
-            }
-          } else {
-            throw CompactError(getLocation(), "Range must be between two integers");
+          values.reserve(rightInt - leftInt);
+          for (auto i = leftInt; i < rightInt; i++) {
+            values.push_back(Value(static_cast<double>(i)));
           }
           return Value(values);
+        } else {
+          throw CompactError(getLocation(),
+                             "Range must be between two integers");
         }
-        case BinaryOperator::POWER: {
-          return Value(std::pow(leftNumber, rightNumber));
-        }
-        case BinaryOperator::NOT_EQUAL: {
-          return Value(leftNumber != rightNumber);
-        }
+      }
+      case BinaryOperator::POWER: {
+        return Value(std::pow(leftNumber, rightNumber));
+      }
+      case BinaryOperator::NOT_EQUAL: {
+        return Value(static_cast<bool>(leftNumber != rightNumber));
+      }
       default:
         throw CompactError(getLocation(), "Unknown binary operator");
       }
@@ -146,6 +156,81 @@ public:
 
   Value evaluate(Context &context) override {
     return evaluate(left->evaluate(context), right->evaluate(context), context);
+  }
+};
+
+class FunctionExpressionNode : public AstNode {
+  std::vector<std::string> parameterNames;
+  std::unique_ptr<AstNode> body;
+
+public:
+  FunctionExpressionNode(Location location,
+                         std::vector<std::string> parameterNames,
+                         std::unique_ptr<AstNode> body)
+      : AstNode(location, AstNodeType::FUNCTION_EXPRESSION),
+        parameterNames(std::move(parameterNames)), body(std::move(body)) {}
+
+  const std::vector<std::string> &getParameterNames() const {
+    return parameterNames;
+  }
+  const AstNode &getBody() const { return *body; }
+
+  Value evaluate(Context &context) override {
+    return Value(Function{parameterNames, body.get(),
+                          std::make_shared<Context>(context)});
+  }
+};
+class FilterExpressionNode : public AstNode {
+  std::unique_ptr<AstNode> left;
+  std::unique_ptr<AstNode> right;
+
+public:
+  FilterExpressionNode(Location location, std::unique_ptr<AstNode> left,
+                       std::unique_ptr<AstNode> right)
+      : AstNode(location, AstNodeType::FILTER_EXPRESSION),
+        left(std::move(left)), right(std::move(right)) {}
+
+  const AstNode &getLeft() const { return *left; }
+  const AstNode &getRight() const { return *right; }
+
+  Value evaluate(Context &context) override {
+    auto leftValue = left->evaluate(context);
+    auto rightValue = right->evaluate(context);
+    if (leftValue.is<ValueType::LIST>() &&
+        rightValue.is<ValueType::FUNCTION>()) {
+      auto leftValues = leftValue.get<ValueType::LIST>();
+      auto rightFunction = rightValue.get<ValueType::FUNCTION>();
+      std::vector<Value> resultValues;
+      for (auto &leftValue : leftValues) {
+        Value filterResult = rightFunction({leftValue});
+        if (!(filterResult.is<ValueType::BOOLEAN>() ||
+              filterResult.is<ValueType::LIST>())) {
+          throw CompactError(
+              getLocation(),
+              "Filter function must return a boolean or list of booleans");
+        }
+        if ((filterResult.is<ValueType::BOOLEAN>() &&
+             filterResult.get<ValueType::BOOLEAN>()) ||
+            (filterResult.is<ValueType::LIST>() &&
+             std::all_of(
+                 filterResult.get<ValueType::LIST>().begin(),
+                 filterResult.get<ValueType::LIST>().end(),
+                 [this](const Value &value) {
+                   if (!value.is<ValueType::BOOLEAN>()) {
+                     throw CompactError(
+                         getLocation(),
+                         "Filter function must return a boolean or list "
+                         "of booleans");
+                   }
+                   return value.get<ValueType::BOOLEAN>();
+                 }))) {
+          resultValues.push_back(leftValue);
+        }
+      }
+      return Value(resultValues);
+    } else {
+      throw CompactError(getLocation(), "Invalid operands for filter operator");
+    }
   }
 };
 } // namespace compact

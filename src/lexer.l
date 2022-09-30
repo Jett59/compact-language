@@ -31,6 +31,11 @@
 "(" { return MAKE(LEFT_PAREN); }
 ")" { return MAKE(RIGHT_PAREN); }
 
+"," { return MAKE(COMMA); }
+";" { return MAKE(SEMICOLON); }
+":" { return MAKE(COLON); }
+"." { return MAKE(DOT); }
+
 "+" { return MAKE(PLUS); }
 "-" { return MAKE(MINUS); }
 "*" { return MAKE(STAR); }
@@ -40,6 +45,7 @@
 "~" { return MAKE(TILDE); }
 "^" { return MAKE(CARET); }
 "!" { return MAKE(BANG); }
+"?" { return MAKE(QUESTION); }
 
 <<EOF>> return yyterminate();
 

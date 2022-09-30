@@ -58,16 +58,17 @@ using std::make_unique;
 %token COLON ":" SEMICOLON ";"
 %token COMMA "," DOT "."
 %token PLUS "+" MINUS "-" STAR "*" SLASH "/" PERCENT "%"
-%token TILDE "~" CARET "^" BANG "!"
+%token TILDE "~" CARET "^" BANG "!" QUESTION "?"
 
 %token END 0 "EOF"
 
-%type <std::unique_ptr<AstNode>> expression
+%type <std::unique_ptr<AstNode>> expression function-expression
 
 %left "!"
 %left "+" "-"
 %left "*" "/" "%"
 %left "^"
+%left "?"
 %left "~"
 
 %start compilation-unit
@@ -111,6 +112,14 @@ $$ = make_unique<BinaryExpressionNode>(@2, BinaryOperator::DIVIDE, $1, $3);
 }
 | expression "!" expression {
     $$ = make_unique<BinaryExpressionNode>(@2, BinaryOperator::NOT_EQUAL, $1, $3);
+}
+| function-expression
+| expression "?" function-expression {
+    $$ = make_unique<FilterExpressionNode>(@2, $1, $3);
+}
+
+function-expression: IDENTIFIER ":" expression ";" {
+    $$ = make_unique<FunctionExpressionNode>(@1, std::vector<std::string>{$1}, $3);
 }
 
 %%

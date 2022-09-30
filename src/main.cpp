@@ -5,23 +5,6 @@
 
 using namespace compact;
 
-static void printValue(const Value &value) {
-  if (value.is<ValueType::NUMBER>()) {
-    std::cout << value.get<ValueType::NUMBER>();
-  } else if (value.is<ValueType::STRING>()) {
-    std::cout << value.get<ValueType::STRING>();
-  } else if (value.is<ValueType::BOOLEAN>()) {
-    std::cout << (value.get<ValueType::BOOLEAN>() ? "true" : "false");
-  } else if (value.is<ValueType::LIST>()) {
-    std::cout << "[";
-    for (auto &item : value.get<ValueType::LIST>()) {
-      printValue(item);
-      std::cout << ", ";
-    }
-    std::cout << "]";
-  }
-}
-
 static void usage(char *command) {
   std::cout << "Usage: " << command << " <filename>" << std::endl;
 }
